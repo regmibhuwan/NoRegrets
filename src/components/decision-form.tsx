@@ -47,6 +47,11 @@ export function DecisionForm(props: Props) {
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [analyzeLoading, setAnalyzeLoading] = useState(false);
   const [aiNote, setAiNote] = useState<string | null>(null);
+  const [coachingQuestions, setCoachingQuestions] = useState<string[] | null>(
+    null
+  );
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [questionsError, setQuestionsError] = useState<string | null>(null);
 
   const [state, action] = useFormState<ActionState, FormData>(
     mode === "create"
@@ -95,6 +100,43 @@ export function DecisionForm(props: Props) {
       setAnalyzeError("Network error");
     } finally {
       setAnalyzeLoading(false);
+    }
+  }
+
+  async function runCoachingQuestions(form: HTMLFormElement) {
+    setQuestionsError(null);
+    const fd = new FormData(form);
+    const title = String(fd.get("title") ?? "").trim();
+    if (title.length < 2) {
+      setQuestionsError("Add a decision title first (at least 2 characters).");
+      return;
+    }
+    setQuestionsLoading(true);
+    try {
+      const res = await fetch("/api/ai/decision-questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          category: fd.get("category"),
+          description: fd.get("description"),
+          expectedOutcome: fd.get("expectedOutcome"),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setQuestionsError(data.error ?? "Could not generate questions");
+        return;
+      }
+      if (!Array.isArray(data.questions) || data.questions.length === 0) {
+        setQuestionsError("No questions returned — try again.");
+        return;
+      }
+      setCoachingQuestions(data.questions);
+    } catch {
+      setQuestionsError("Network error");
+    } finally {
+      setQuestionsLoading(false);
     }
   }
 
@@ -169,6 +211,20 @@ export function DecisionForm(props: Props) {
           placeholder="What was going on? What were you optimizing for?"
         />
       </div>
+
+      {mode === "create" && (
+        <CardCoachingQuestions
+          questions={coachingQuestions}
+          questionsError={questionsError}
+          questionsLoading={questionsLoading}
+          onGenerate={() => {
+            const form = document.getElementById(
+              "decision-form-el"
+            ) as HTMLFormElement | null;
+            if (form) runCoachingQuestions(form);
+          }}
+        />
+      )}
 
       <div>
         <Label htmlFor="expectedOutcome">Expected outcome</Label>
@@ -290,6 +346,57 @@ export function DecisionForm(props: Props) {
   );
 }
 
+function CardCoachingQuestions({
+  questions,
+  questionsError,
+  questionsLoading,
+  onGenerate,
+}: {
+  questions: string[] | null;
+  questionsError: string | null;
+  questionsLoading: boolean;
+  onGenerate: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-teal-200/70 dark:border-teal-800/60 bg-gradient-to-br from-teal-50/90 to-cyan-50/40 dark:from-teal-950/40 dark:to-slate-900/40 p-4 sm:p-5 space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-teal-900 dark:text-teal-100">
+            Coaching questions (AI)
+          </p>
+          <p className="text-xs text-muted leading-relaxed max-w-xl">
+            Get sharp, tailored questions to stress-test your thinking. Answer
+            them in the fields below (context, expected outcome, feelings,
+            etc.) — everything else on this page stays the same.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="shrink-0 bg-white/80 dark:bg-slate-800/80 border-teal-200/80 dark:border-teal-800"
+          onClick={onGenerate}
+          disabled={questionsLoading}
+        >
+          {questionsLoading ? "Thinking…" : questions ? "Refresh questions" : "Generate questions"}
+        </Button>
+      </div>
+      {questionsError && (
+        <p className="text-sm text-danger">{questionsError}</p>
+      )}
+      {questions && questions.length > 0 && (
+        <ol className="list-decimal list-inside space-y-2.5 text-sm text-foreground/95 marker:text-teal-600 dark:marker:text-teal-400">
+          {questions.map((q, i) => (
+            <li key={i} className="pl-1 leading-relaxed">
+              {q}
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
 function CardAi({
   riskScore,
   analyzeError,
@@ -309,7 +416,7 @@ function CardAi({
         <div>
           <p className="text-sm font-medium">Regret risk (AI)</p>
           <p className="text-xs text-muted">
-            Optional check before you save — uses GPT-4o on your draft.
+            Optional — risk score + summary after your draft is filled in.
           </p>
         </div>
         <Button

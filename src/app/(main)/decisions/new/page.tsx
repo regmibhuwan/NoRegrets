@@ -15,7 +15,8 @@ export default function NewDecisionPage() {
         </Link>
         <h1 className="text-2xl font-semibold mt-2">New decision</h1>
         <p className="text-sm text-muted mt-1">
-          Capture the story while you remember it. You can refine later.
+          Use AI coaching questions to sharpen your thinking, then fill the
+          rest of the form as usual. You can refine anytime.
         </p>
       </div>
       <DecisionForm mode="create" />
