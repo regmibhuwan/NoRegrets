@@ -36,8 +36,23 @@ create table if not exists public.decisions (
   updated_at timestamptz not null default now()
 );
 
--- Existing DBs: table may have been created before this column existed; IF NOT EXISTS skips CREATE TABLE.
+-- Existing DBs: CREATE TABLE IF NOT EXISTS does not add new columns; keep in sync with app + database.types.
+alter table public.decisions add column if not exists category text default 'other';
+alter table public.decisions add column if not exists description text;
+alter table public.decisions add column if not exists expected_outcome text;
+alter table public.decisions add column if not exists confidence_level int;
+alter table public.decisions add column if not exists urgency text default 'medium';
+alter table public.decisions add column if not exists people_involved text;
+alter table public.decisions add column if not exists decision_date date default (current_date);
 alter table public.decisions add column if not exists follow_up_date date;
+alter table public.decisions add column if not exists tags text[] default '{}'::text[];
+alter table public.decisions add column if not exists status text default 'pending';
+alter table public.decisions add column if not exists feeling_at_time text;
+alter table public.decisions add column if not exists risk_score int;
+alter table public.decisions add column if not exists reminder_sent_at timestamptz;
+alter table public.decisions add column if not exists ai_summary text;
+alter table public.decisions add column if not exists created_at timestamptz default now();
+alter table public.decisions add column if not exists updated_at timestamptz default now();
 
 create index if not exists decisions_user_id_idx on public.decisions (user_id);
 create index if not exists decisions_follow_up_idx on public.decisions (user_id, follow_up_date);
