@@ -8,7 +8,7 @@ export default function ForgotPasswordPage() {
   return (
     <AuthSplitShell
       title="Reset password"
-      subtitle={`We’ll email you a secure reset link (Supabase default). Your email must already be confirmed. If links ever open localhost, fix Site URL in Supabase → Authentication.`}
+      subtitle="Enter your email and we’ll send you a link to choose a new password."
       footer={
         <Link
           href="/login"
