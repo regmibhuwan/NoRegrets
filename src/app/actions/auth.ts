@@ -11,18 +11,19 @@ export type AuthActionState = {
   email?: string;
 };
 
-function appOrigin() {
-  const u = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+function serverAppOrigin() {
+  const u =
+    process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000";
   return u.replace(/\/$/, "");
 }
 
 function emailRedirectTo() {
-  return `${appOrigin()}/auth/callback?next=/onboarding`;
+  return `${serverAppOrigin()}/auth/callback?next=/onboarding`;
 }
 
 function loginHelpMessage(raw: string): string {
   if (/invalid login credentials|email not confirmed/i.test(raw)) {
-    return "Wrong email or password—or this email isn’t confirmed yet. For smooth local dev, set AUTH_DEV_AUTO_CONFIRM=true and SUPABASE_SERVICE_ROLE_KEY in .env.local, then sign up with a fresh email. Or confirm the user under Supabase → Authentication → Users.";
+    return "Wrong email or password—or this email isn’t confirmed yet. Use the code we sent you (check spam), or request a new one from the sign-up page.";
   }
   return raw;
 }

@@ -11,8 +11,9 @@ export default function UpdatePasswordPage() {
           Choose a new password
         </h1>
         <p className="text-sm text-muted text-center mb-6">
-          Use the link from your reset email. If this page says you are not
-          signed in, open the email link again.
+          Open this page right after you use the reset link from your email. If
+          you verified with a code on the forgot-password page, you can set a
+          new password here too.
         </p>
         <UpdatePasswordForm />
         <p className="text-center text-sm text-muted mt-6">
